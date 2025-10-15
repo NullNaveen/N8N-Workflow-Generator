@@ -109,14 +109,22 @@ def generate_workflow_with_groq(prompt):
         
         response = requests.post(GROQ_API_URL, headers=headers, json=data)
         response.raise_for_status()
-        
-    result = response.json()
-    workflow_json = result['choices'][0]['message']['content']
+        result = response.json()
+        workflow_text = result['choices'][0]['message']['content']
 
-    # Try to parse the JSON
-    workflow = json.loads(workflow_json)
-    return workflow, None
-        
+        # Extract JSON from possible code fences or extra text
+        # Find the first '{' and the last '}' to bound the JSON object
+        start = workflow_text.find('{')
+        end = workflow_text.rfind('}')
+        if start != -1 and end != -1 and end > start:
+            workflow_json = workflow_text[start:end+1]
+        else:
+            workflow_json = workflow_text
+
+        # Try to parse the JSON
+        workflow = json.loads(workflow_json)
+        return workflow, None
+
     except Exception as e:
         return None, str(e)
 
@@ -174,6 +182,28 @@ def ensure_required_defaults(workflow: dict) -> dict:
         if ntype == 'n8n-nodes-base.googleSheetsTrigger':
             node.setdefault('disabled', True)
 
+        # Notion create page defaults
+        if ntype == 'n8n-nodes-base.notion':
+            params.setdefault('resource', 'page')
+            params.setdefault('operation', 'create')
+            # Minimal placeholders; user must configure in n8n
+            params.setdefault('databaseId', 'REPLACE_WITH_DATABASE_ID')
+            # Notion node often expects properties; provide a minimal title
+            params.setdefault('propertiesUi', {
+                'property': [
+                    {
+                        'name': 'Name',
+                        'key': 'title',
+                        'type': 'title',
+                        'title': [
+                            {
+                                'text': 'New page from workflow'
+                            }
+                        ]
+                    }
+                ]
+            })
+
     return workflow
 
 
@@ -222,6 +252,16 @@ def generate_workflow_fallback(prompt):
             "disabled": True
         }
         trigger_name = "Google Sheets Trigger"
+    elif 'slack' in prompt_lower and any(w in prompt_lower for w in ['message', 'mention', '#']):
+        trigger_node = {
+            "name": "Slack Trigger",
+            "type": "n8n-nodes-base.slackTrigger",
+            "position": [250, 300],
+            "parameters": {"event": "message"},
+            "typeVersion": 1,
+            "disabled": True
+        }
+        trigger_name = "Slack Trigger"
     else:
         # Default to manual trigger
         trigger_node = {
@@ -325,6 +365,34 @@ def generate_workflow_fallback(prompt):
             "disabled": True
         }
         action_name = "Airtable"
+    elif 'notion' in prompt_lower:
+        action_node = {
+            "name": "Notion",
+            "type": "n8n-nodes-base.notion",
+            "position": [450, 300],
+            "parameters": {
+                "resource": "page",
+                "operation": "create",
+                "databaseId": "REPLACE_WITH_DATABASE_ID",
+                "propertiesUi": {
+                    "property": [
+                        {
+                            "name": "Name",
+                            "key": "title",
+                            "type": "title",
+                            "title": [
+                                {
+                                    "text": "New page from workflow"
+                                }
+                            ]
+                        }
+                    ]
+                }
+            },
+            "typeVersion": 1,
+            "disabled": True
+        }
+        action_name = "Notion"
     else:
         # Default to HTTP request
         action_node = {
@@ -363,7 +431,7 @@ def index():
 def generate_workflow():
     """Generate n8n workflow from natural language prompt"""
     try:
-        data = request.json
+        data = request.get_json(silent=True) or {}
         prompt = data.get('prompt', '')
         
         if not prompt:
