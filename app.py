@@ -26,6 +26,7 @@ with open('training_examples.json', 'r') as f:
 # Configuration
 GROQ_API_KEY = os.getenv('GROQ_API_KEY', '')  # Groq API key from environment or .env files
 GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions'
+LOCAL_INFER_URL = os.getenv('LOCAL_INFER_URL', 'http://127.0.0.1:8000/generate')
 
 # Common n8n node types and their purposes
 NODE_TYPES = {
@@ -207,218 +208,17 @@ def ensure_required_defaults(workflow: dict) -> dict:
     return workflow
 
 
-def generate_workflow_fallback(prompt):
-    """Fallback method using simple pattern matching"""
-    prompt_lower = prompt.lower()
-    
-    # Detect trigger type
-    trigger_node = None
-    trigger_name = None
-    
-    if 'webhook' in prompt_lower or 'receive data' in prompt_lower:
-        trigger_node = {
-            "name": "Webhook",
-            "type": "n8n-nodes-base.webhook",
-            "position": [250, 300],
-            "parameters": {"path": "automation", "responseMode": "lastNode"},
-            "typeVersion": 1
-        }
-        trigger_name = "Webhook"
-    elif 'schedule' in prompt_lower or 'every day' in prompt_lower or 'daily' in prompt_lower or 'time' in prompt_lower or 'every ' in prompt_lower:
-        trigger_node = {
-            "name": "Schedule Trigger",
-            "type": "n8n-nodes-base.scheduleTrigger",
-            "position": [250, 300],
-            "parameters": {"rule": {"interval": [{"field": "hours", "hoursInterval": 24}]}},
-            "typeVersion": 1
-        }
-        trigger_name = "Schedule Trigger"
-    elif 'gmail' in prompt_lower or 'email received' in prompt_lower or 'new email' in prompt_lower:
-        trigger_node = {
-            "name": "Gmail Trigger",
-            "type": "n8n-nodes-base.gmailTrigger",
-            "position": [250, 300],
-            "parameters": {"options": {}},
-            "typeVersion": 1
-        }
-        trigger_name = "Gmail Trigger"
-    elif ('google sheets' in prompt_lower or 'spreadsheet' in prompt_lower) and ('new row' in prompt_lower or 'added' in prompt_lower):
-        trigger_node = {
-            "name": "Google Sheets Trigger",
-            "type": "n8n-nodes-base.googleSheetsTrigger",
-            "position": [250, 300],
-            "parameters": {"event": "rowAdded"},
-            "typeVersion": 1,
-            "disabled": True
-        }
-        trigger_name = "Google Sheets Trigger"
-    elif 'slack' in prompt_lower and any(w in prompt_lower for w in ['message', 'mention', '#']):
-        trigger_node = {
-            "name": "Slack Trigger",
-            "type": "n8n-nodes-base.slackTrigger",
-            "position": [250, 300],
-            "parameters": {"event": "message"},
-            "typeVersion": 1,
-            "disabled": True
-        }
-        trigger_name = "Slack Trigger"
-    else:
-        # Default to manual trigger
-        trigger_node = {
-            "name": "Manual Trigger",
-            "type": "n8n-nodes-base.manualTrigger",
-            "position": [250, 300],
-            "parameters": {},
-            "typeVersion": 1
-        }
-        trigger_name = "Manual Trigger"
-    
-    # Detect action type
-    action_node = None
-    action_name = None
-    
-    if 'gmail' in prompt_lower or 'send email' in prompt_lower or ('email' in prompt_lower and 'trigger' not in prompt_lower):
-        action_node = {
-            "name": "Gmail",
-            "type": "n8n-nodes-base.gmail",
-            "position": [450, 300],
-            "parameters": {
-                "operation": "send",
-                "resource": "message",
-                "to": "you@example.com",
-                "subject": "Automated notification",
-                "message": "This is an automated message"
-            },
-            "typeVersion": 1,
-            "disabled": True
-        }
-        action_name = "Gmail"
-    elif 'slack' in prompt_lower:
-        action_node = {
-            "name": "Slack",
-            "type": "n8n-nodes-base.slack",
-            "position": [450, 300],
-            "parameters": {
-                "operation": "post",
-                "resource": "message",
-                "channel": "#general",
-                "text": "Automated notification"
-            },
-            "typeVersion": 1,
-            "disabled": True
-        }
-        action_name = "Slack"
-    elif 'discord' in prompt_lower:
-        action_node = {
-            "name": "Discord",
-            "type": "n8n-nodes-base.discord",
-            "position": [450, 300],
-            "parameters": {
-                "resource": "message",
-                "operation": "send",
-                "text": "Automated notification",
-                "channelId": "REPLACE_WITH_CHANNEL_ID"
-            },
-            "typeVersion": 1,
-            "disabled": True
-        }
-        action_name = "Discord"
-    elif 'google sheets' in prompt_lower or 'spreadsheet' in prompt_lower:
-        action_node = {
-            "name": "Google Sheets",
-            "type": "n8n-nodes-base.googleSheets",
-            "position": [450, 300],
-            "parameters": {
-                "operation": "append",
-                "resource": "sheet",
-                "documentId": "REPLACE_WITH_SHEET_ID",
-                "sheetName": "Sheet1"
-            },
-            "typeVersion": 1,
-            "disabled": True
-        }
-        action_name = "Google Sheets"
-    elif 'trello' in prompt_lower:
-        action_node = {
-            "name": "Trello",
-            "type": "n8n-nodes-base.trello",
-            "position": [450, 300],
-            "parameters": {
-                "operation": "create",
-                "resource": "card",
-                "name": "New card"
-            },
-            "typeVersion": 1,
-            "disabled": True
-        }
-        action_name = "Trello"
-    elif 'airtable' in prompt_lower:
-        action_node = {
-            "name": "Airtable",
-            "type": "n8n-nodes-base.airtable",
-            "position": [450, 300],
-            "parameters": {
-                "operation": "create",
-                "resource": "row"
-            },
-            "typeVersion": 1,
-            "disabled": True
-        }
-        action_name = "Airtable"
-    elif 'notion' in prompt_lower:
-        action_node = {
-            "name": "Notion",
-            "type": "n8n-nodes-base.notion",
-            "position": [450, 300],
-            "parameters": {
-                "resource": "page",
-                "operation": "create",
-                "databaseId": "REPLACE_WITH_DATABASE_ID",
-                "propertiesUi": {
-                    "property": [
-                        {
-                            "name": "Name",
-                            "key": "title",
-                            "type": "title",
-                            "title": [
-                                {
-                                    "text": "New page from workflow"
-                                }
-                            ]
-                        }
-                    ]
-                }
-            },
-            "typeVersion": 1,
-            "disabled": True
-        }
-        action_name = "Notion"
-    else:
-        # Default to HTTP request
-        action_node = {
-            "name": "HTTP Request",
-            "type": "n8n-nodes-base.httpRequest",
-            "position": [450, 300],
-            "parameters": {
-                "method": "POST",
-                "url": ""
-            },
-            "typeVersion": 1,
-            "disabled": True
-        }
-        action_name = "HTTP Request"
-    
-    # Build workflow
-    workflow = {
-        "nodes": [trigger_node, action_node],
-        "connections": {
-            trigger_name: {
-                "main": [[{"node": action_name, "type": "main", "index": 0}]]
-            }
-        }
-    }
-    
-    return ensure_required_defaults(workflow)
+def generate_with_local_llm(prompt: str):
+    try:
+        resp = requests.post(LOCAL_INFER_URL, json={"prompt": prompt}, timeout=60)
+        if resp.status_code != 200:
+            return None, f"local inference error: {resp.status_code} {resp.text[:200]}"
+        data = resp.json()
+        if "workflow" not in data:
+            return None, "local inference returned no workflow"
+        return data["workflow"], None
+    except Exception as e:
+        return None, str(e)
 
 
 @app.route('/')
@@ -437,13 +237,14 @@ def generate_workflow():
         if not prompt:
             return jsonify({'error': 'Prompt is required'}), 400
         
-        # Try Groq API first
-        workflow, error = generate_workflow_with_groq(prompt)
-        
-        # If Groq fails, use fallback
+        # Prefer local fine-tuned LLM first
+        workflow, error = generate_with_local_llm(prompt)
+        # Fall back to Groq if configured and local fails
         if error or not workflow:
-            print(f"Groq failed: {error}, using fallback method")
-            workflow = generate_workflow_fallback(prompt)
+            print(f"Local LLM failed: {error}. Trying Groq...")
+            workflow, error = generate_workflow_with_groq(prompt)
+        if error or not workflow:
+            return jsonify({"error": f"Generation failed: {error}"}), 500
         
         # Add metadata
         workflow['name'] = prompt[:50]
@@ -455,7 +256,7 @@ def generate_workflow():
             'success': True,
             'workflow': workflow,
             'prompt': prompt,
-            'method': 'groq' if not error else 'fallback'
+            'method': 'local' if error is None and workflow else 'groq'
         })
         
     except Exception as e:

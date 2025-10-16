@@ -27,3 +27,12 @@ Thumbs.db
 
 # Generated workflows
 generated_workflows/
+
+# Training artifacts
+data/
+models/
+.cache/
+~/.cache/huggingface/
+*.pt
+*.bin
+*.safetensors

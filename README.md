@@ -62,37 +62,34 @@ These folders represent all the available n8n integrations (Gmail, Slack, Google
 
 ---
 
-## 🔧 Advanced Setup (Optional - For Better AI Results)
+## 🔧 Advanced Setup (Local LLM + Groq optional)
 
-The system works in **two modes**:
+The app now uses a Local LLM first (if available), and Groq second (optional). No rule-based mode.
 
-### Mode 1: Rule-Based (Default - FREE)
-- Works immediately without any setup
-- Uses pattern matching to generate workflows
-- Good for common automation patterns
-- **No API key needed**
+### Option A: Local LLM (fine-tuned)
+1) Build dataset from your `workflows/`:
+```powershell
+python .\scripts\train\dataset_builder.py
+```
+2) Train a small LoRA adapter (GPU recommended):
+```powershell
+$env:BASE_MODEL="mistralai/Mistral-7B-Instruct-v0.3"
+python .\scripts\train\qlora_train.py
+```
+3) Serve the adapter locally:
+```powershell
+$env:BASE_MODEL="mistralai/Mistral-7B-Instruct-v0.3"
+$env:ADAPTER_PATH="models/n8n-lora"
+python .\scripts\serve\local_inference.py
+```
+The app will call http://127.0.0.1:8000/generate first. Override with `LOCAL_INFER_URL` in `.env` if needed.
 
-### Mode 2: AI-Powered (Recommended - FREE)
-- Uses Groq's free AI API for smarter generation
-- Better understanding of complex requests
-- Still completely free!
-
-**To enable AI mode:**
-
-1. Get a free Groq API key:
-   - Go to https://console.groq.com/
-   - Sign up (it's free)
-   - Go to "API Keys" and create a new key
-   - Copy the key
-
-2. Create a `.env` file in the project folder:
-   ```
-   GROQ_API_KEY=your_key_here
-   ```
-
-3. Restart the application (close the terminal and run `start.bat` again)
-
-That's it! The AI mode will automatically activate.
+### Option B: Groq (optional fallback)
+Set a free API key in `.env` to enable the Groq path:
+```
+GROQ_API_KEY=your_key_here
+```
+Restart the app after changes.
 
 ---
 
