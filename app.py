@@ -99,7 +99,7 @@ def generate_workflow_with_groq(prompt):
         }
         
         data = {
-            'model': 'llama-3.1-70b-versatile',  # Free model
+            'model': 'llama-3.1-8b-instant',  # Fast model with 14.4K requests/day (was 70b with only 1K/day)
             'messages': [
                 {'role': 'system', 'content': create_system_prompt()},
                 {'role': 'user', 'content': prompt}
