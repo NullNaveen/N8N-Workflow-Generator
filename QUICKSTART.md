@@ -1,6 +1,6 @@
 # Quick Start - N8N Workflow Generator (LLM Only)
 
-You have removed Groq completely. The app now uses only a **local LLM server** to generate n8n workflows from natural language prompts.
+The app uses a **local LLM server** to generate n8n workflows from natural language prompts.
 
 ## 🚀 Fast Start (< 1 minute)
 
@@ -130,7 +130,7 @@ n8n Workflow JSON
 - [ ] `run_full_test.py` shows 10 PASSED
 - [ ] Frontend responds to prompts at http://localhost:5000
 - [ ] Generated workflows have 4-7 nodes
-- [ ] Method shows "local" (not rule-based or groq)
+- [ ] Method shows "local"
 
 ---
 
@@ -166,7 +166,7 @@ n8n Workflow JSON
 
 **Happy workflow generating! 🎉**
 
-You've successfully removed Groq. Here's how to run the system now:
+Here's how to run the system now:
 
 ## Two Servers Need to Run:
 
@@ -207,7 +207,6 @@ http://localhost:5000
 
 ## Your Current Setup
 
-✅ **Groq is REMOVED** - No API keys needed
 ✅ **LLM-Only** - Using `LOCAL_INFER_URL` from `.env`
 ✅ **Two-Server Architecture**:
    - LLM Server (8000) - generates workflows
