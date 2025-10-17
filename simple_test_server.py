@@ -33,7 +33,7 @@ def keyword_to_nodes(prompt: str) -> list:
     matched_nodes = []
     
     # Trigger detection (pick ONE)
-    if any(w in prompt_lower for w in ["webhook", "receive", "incoming", "http", "post", "api call"]):
+    if any(w in prompt_lower for w in ["webhook", "receive", "incoming", "api call"]):
         matched_nodes.append("webhook")
     elif any(w in prompt_lower for w in ["schedule", "every", "daily", "hourly", "cron", "at 9am", "time", "periodic"]):
         matched_nodes.append("schedule")
@@ -42,47 +42,77 @@ def keyword_to_nodes(prompt: str) -> list:
     else:
         matched_nodes.append("webhook")  # Default trigger
     
-    # Aggressive action detection - match all mentioned services
+    # Aggressive action detection - match ALL mentioned services
+    # Check for each service independently and add ALL matches
+    
     if any(w in prompt_lower for w in ["slack", "slack channel", "slack message", "post to slack"]):
         matched_nodes.append("slack")
+    
     if any(w in prompt_lower for w in ["email", "send email", "email notification", "email to", "send an email"]):
         matched_nodes.append("email")
+    
     if any(w in prompt_lower for w in ["gmail", "gmail message", "gmail send"]):
         matched_nodes.append("gmail")
+    
     if any(w in prompt_lower for w in ["discord", "discord message", "discord notify", "post to discord"]):
         matched_nodes.append("discord")
-    if any(w in prompt_lower for w in ["sheets", "google sheets", "spreadsheet", "sheets log"]):
+    
+    if any(w in prompt_lower for w in ["sheets", "google sheets", "spreadsheet", "sheets log", "log the"]):
         matched_nodes.append("sheets")
+    
     if any(w in prompt_lower for w in ["airtable", "airtable base", "airtable record"]):
         matched_nodes.append("airtable")
+    
     if any(w in prompt_lower for w in ["notion", "notion page", "notion database", "log to notion"]):
         matched_nodes.append("notion")
+    
     if any(w in prompt_lower for w in ["trello", "trello card", "create card"]):
         matched_nodes.append("trello")
-    if any(w in prompt_lower for w in ["asana", "asana task", "create task"]):
+    
+    if any(w in prompt_lower for w in ["asana", "asana task", "create task", "create an asana"]):
         matched_nodes.append("asana")
+    
     if any(w in prompt_lower for w in ["zendesk", "zendesk ticket", "support ticket", "create ticket"]):
         matched_nodes.append("zendesk")
+    
     if any(w in prompt_lower for w in ["stripe", "stripe payment", "payment", "billing"]):
         matched_nodes.append("stripe")
+    
     if any(w in prompt_lower for w in ["mongodb", "database", "mongo", "store in database", "save to db"]):
         matched_nodes.append("mongodb")
-    if any(w in prompt_lower for w in ["api", "http request", "call api", "post request", "fetch data"]):
+    
+    if any(w in prompt_lower for w in ["hubspot", "hubspot lead", "crm"]):
+        matched_nodes.append("http")  # Map to HTTP as placeholder
+    
+    if any(w in prompt_lower for w in ["salesforce", "salesforce record", "create in salesforce"]):
         matched_nodes.append("http")
-    if any(w in prompt_lower for w in ["validate", "parse", "transform", "convert", "process", "analyze", "custom logic"]):
-        matched_nodes.append("function")
-    if any(w in prompt_lower for w in ["hubspot", "crm", "customer", "lead"]):
-        matched_nodes.append("slack")  # Placeholder for unknown services
-    if any(w in prompt_lower for w in ["twitter", "tweet", "post to twitter", "share on twitter"]):
-        matched_nodes.append("slack")  # Placeholder
-    if any(w in prompt_lower for w in ["linkedin", "linkedin post", "share on linkedin"]):
-        matched_nodes.append("slack")  # Placeholder
+    
+    if any(w in prompt_lower for w in ["mailchimp", "mailchimp list", "add to mailchimp"]):
+        matched_nodes.append("http")
+    
+    if any(w in prompt_lower for w in ["twitter", "tweet", "post to twitter", "share on twitter", "post it on twitter", "post on twitter", "twitter and"]):
+        matched_nodes.append("http")  # HTTP call to Twitter API
+    
+    if any(w in prompt_lower for w in ["linkedin", "linkedin post", "share on linkedin", "post on linkedin", "post it on linkedin", "post to linkedin", "and linkedin"]):
+        matched_nodes.append("slack")  # Post to LinkedIn via Slack (or email notification)
+    
     if any(w in prompt_lower for w in ["teams", "microsoft teams", "post to teams"]):
         matched_nodes.append("discord")  # Similar notification service
-    if any(w in prompt_lower for w in ["wordpress", "blog post", "publish"]):
-        matched_nodes.append("http")  # HTTP to wordpress
+    
+    if any(w in prompt_lower for w in ["wordpress", "blog post", "blog", "publish"]):
+        matched_nodes.append("http")  # HTTP webhook for WordPress
+    
+    if any(w in prompt_lower for w in ["shorten", "url shortener", "short url", "shorten the url"]):
+        matched_nodes.append("function")  # Custom function for URL shortening
+    
     if any(w in prompt_lower for w in ["quickbooks", "invoice", "accounting"]):
-        matched_nodes.append("http")  # Accounting services via API
+        matched_nodes.append("http")
+    
+    if any(w in prompt_lower for w in ["api", "http request", "call api", "post request", "fetch data", "request data"]):
+        matched_nodes.append("http")
+    
+    if any(w in prompt_lower for w in ["validate", "parse", "transform", "convert", "process", "analyze", "custom logic"]):
+        matched_nodes.append("function")
     
     # Remove duplicates while preserving order
     seen = set()
