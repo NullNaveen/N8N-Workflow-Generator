@@ -227,6 +227,64 @@ def index():
     return send_from_directory('.', 'index.html')
 
 
+def is_workflow_related(prompt: str) -> tuple[bool, str]:
+    """
+    Check if prompt is related to workflow creation.
+    Returns (is_valid, error_message)
+    """
+    prompt_lower = prompt.lower().strip()
+    
+    # Common greetings and off-topic phrases
+    greeting_patterns = [
+        'hi', 'hello', 'hey', 'greetings', 'good morning', 'good afternoon',
+        'good evening', 'what\'s up', 'whats up', 'sup', 'yo', 'hiya'
+    ]
+    
+    off_topic_patterns = [
+        'how are you', 'who are you', 'what are you', 'tell me about',
+        'can you help', 'i need help', 'help me', 'what can you do',
+        'what is your name', 'your name', 'who made you', 'who created you'
+    ]
+    
+    # Check if it's just a greeting or off-topic
+    is_greeting = any(prompt_lower == pattern or prompt_lower.startswith(pattern + ' ') 
+                     for pattern in greeting_patterns)
+    
+    is_off_topic = any(pattern in prompt_lower for pattern in off_topic_patterns)
+    
+    # Workflow-related keywords that indicate valid requests
+    workflow_keywords = [
+        'workflow', 'automation', 'create', 'build', 'make', 'generate',
+        'trigger', 'webhook', 'send', 'email', 'slack', 'notification',
+        'schedule', 'run', 'execute', 'process', 'when', 'if', 'then',
+        'connect', 'integrate', 'api', 'database', 'fetch', 'store',
+        'update', 'delete', 'add', 'save', 'get', 'post', 'data'
+    ]
+    
+    has_workflow_keyword = any(keyword in prompt_lower for keyword in workflow_keywords)
+    
+    # If it's a greeting or off-topic, reject
+    if is_greeting or is_off_topic:
+        return False, (
+            "I'm a workflow generator assistant. I can help you create n8n workflows! "
+            "Try describing an automation you'd like to build, for example:\n"
+            "• 'Send email when webhook receives data'\n"
+            "• 'Create Slack notification every day at 9am'\n"
+            "• 'Save form submissions to Google Sheets'"
+        )
+    
+    # If it's too short and has no workflow keywords, probably invalid
+    if len(prompt_lower.split()) < 3 and not has_workflow_keyword:
+        return False, (
+            "Please describe the workflow you'd like to create. "
+            "Be specific about what should happen and when. "
+            "For example: 'Send an email notification when a webhook receives data'"
+        )
+    
+    # Looks valid!
+    return True, ""
+
+
 @app.route('/api/generate', methods=['POST'])
 def generate_workflow():
     """Generate n8n workflow from natural language prompt"""
@@ -236,6 +294,15 @@ def generate_workflow():
         
         if not prompt:
             return jsonify({'error': 'Prompt is required'}), 400
+        
+        # Validate that the prompt is workflow-related
+        is_valid, error_msg = is_workflow_related(prompt)
+        if not is_valid:
+            return jsonify({
+                'success': False,
+                'error': error_msg,
+                'type': 'validation_error'
+            }), 400
         
         # Prefer local fine-tuned LLM first
         workflow, error = generate_with_local_llm(prompt)

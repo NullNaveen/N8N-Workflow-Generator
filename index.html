@@ -447,11 +447,20 @@
                 
                 removeTypingIndicator();
                 
-                if (!response.ok) {
-                    throw new Error('Failed to generate workflow');
+                const data = await response.json();
+                
+                // Handle validation errors (400 status)
+                if (!response.ok && data.type === 'validation_error') {
+                    addMessage(`ℹ️ ${data.error}`, false);
+                    sendBtn.disabled = false;
+                    input.disabled = false;
+                    input.focus();
+                    return;
                 }
                 
-                const data = await response.json();
+                if (!response.ok) {
+                    throw new Error(data.error || 'Failed to generate workflow');
+                }
                 
                 if (data.success) {
                     currentWorkflow = data.workflow;
