@@ -1,0 +1,43 @@
+﻿================================================================================
+N8N WORKFLOW GENERATOR - COMPLEX PROMPT TEST SUITE
+================================================================================
+Testing 10 complex prompts...
+
+[TEST 1/10] Prompt: When a customer support email arrives, save attachments to Google Driv...
+  [FAIL] Connection error: HTTPConnectionPool(host='127.0.0.1', port=5000): Max retries exceeded with url: /api/generate (Cause
+[TEST 2/10] Prompt: Monitor Google Sheets for new rows where sales exceed $5000; alert tea...
+  [FAIL] Connection error: HTTPConnectionPool(host='127.0.0.1', port=5000): Max retries exceeded with url: /api/generate (Cause
+[TEST 3/10] Prompt: When a GitHub issue is created with 'bug' label, create Trello card, n...
+  [FAIL] Connection error: HTTPConnectionPool(host='127.0.0.1', port=5000): Max retries exceeded with url: /api/generate (Cause
+[TEST 4/10] Prompt: Process incoming webhook data, validate with custom function, store in...
+  [FAIL] Connection error: HTTPConnectionPool(host='127.0.0.1', port=5000): Max retries exceeded with url: /api/generate (Cause
+[TEST 5/10] Prompt: Daily at 9am UTC: fetch weather data, analyze trends with custom code,...
+  [FAIL] Connection error: HTTPConnectionPool(host='127.0.0.1', port=5000): Max retries exceeded with url: /api/generate (Cause
+[TEST 6/10] Prompt: When Stripe payment succeeds, update customer in HubSpot CRM, send tha...
+  [FAIL] Connection error: HTTPConnectionPool(host='127.0.0.1', port=5000): Max retries exceeded with url: /api/generate (Cause
+[TEST 7/10] Prompt: Monitor RSS feed, filter articles by keyword, summarize with AI, post ...
+  [FAIL] Connection error: HTTPConnectionPool(host='127.0.0.1', port=5000): Max retries exceeded with url: /api/generate (Cause
+[TEST 8/10] Prompt: When form submission received, validate email and phone, save to datab...
+  [FAIL] Connection error: HTTPConnectionPool(host='127.0.0.1', port=5000): Max retries exceeded with url: /api/generate (Cause
+[TEST 9/10] Prompt: When file uploaded, extract text with OCR, translate to Spanish, save ...
+  [FAIL] Connection error: HTTPConnectionPool(host='127.0.0.1', port=5000): Max retries exceeded with url: /api/generate (Cause
+[TEST 10/10] Prompt: When calendar event starts, send reminder emails to all attendees, upd...
+  [FAIL] Connection error: HTTPConnectionPool(host='127.0.0.1', port=5000): Max retries exceeded with url: /api/generate (Cause
+
+================================================================================
+RESULTS: 0 PASSED, 10 FAILED
+================================================================================
+
+Failed tests:
+  Test 1: Connection: HTTPConnectionPool(host='127.0.0.1', port=5000): M
+  Test 2: Connection: HTTPConnectionPool(host='127.0.0.1', port=5000): M
+  Test 3: Connection: HTTPConnectionPool(host='127.0.0.1', port=5000): M
+  Test 4: Connection: HTTPConnectionPool(host='127.0.0.1', port=5000): M
+  Test 5: Connection: HTTPConnectionPool(host='127.0.0.1', port=5000): M
+  Test 6: Connection: HTTPConnectionPool(host='127.0.0.1', port=5000): M
+  Test 7: Connection: HTTPConnectionPool(host='127.0.0.1', port=5000): M
+  Test 8: Connection: HTTPConnectionPool(host='127.0.0.1', port=5000): M
+  Test 9: Connection: HTTPConnectionPool(host='127.0.0.1', port=5000): M
+  Test 10: Connection: HTTPConnectionPool(host='127.0.0.1', port=5000): M
+
+Passed tests:

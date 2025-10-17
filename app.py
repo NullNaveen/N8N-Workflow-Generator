@@ -16,7 +16,7 @@ CORS(app)
 
 # Load environment variables from .env, and if missing, fall back to .env.example (without overriding)
 load_dotenv(override=False)
-if not os.getenv('GROQ_API_KEY') and os.path.exists('.env.example'):
+if os.path.exists('.env.example'):
     load_dotenv('.env.example', override=False)
 
 # Load training examples
@@ -24,8 +24,6 @@ with open('training_examples.json', 'r') as f:
     TRAINING_EXAMPLES = json.load(f)
 
 # Configuration
-GROQ_API_KEY = os.getenv('GROQ_API_KEY', '')  # Groq API key from environment or .env files
-GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions'
 LOCAL_INFER_URL = os.getenv('LOCAL_INFER_URL', 'http://127.0.0.1:8000/generate')
 
 # Common n8n node types and their purposes
@@ -87,47 +85,7 @@ RULES:
 Respond with ONLY the JSON workflow object."""
 
 
-def generate_workflow_with_groq(prompt):
-    """Generate workflow using Groq API (free tier)"""
-    if not GROQ_API_KEY:
-        return None, "Groq API key not configured"
-    
-    try:
-        headers = {
-            'Authorization': f'Bearer {GROQ_API_KEY}',
-            'Content-Type': 'application/json'
-        }
-        
-        data = {
-            'model': 'llama-3.1-8b-instant',  # Fast model with 14.4K requests/day (was 70b with only 1K/day)
-            'messages': [
-                {'role': 'system', 'content': create_system_prompt()},
-                {'role': 'user', 'content': prompt}
-            ],
-            'temperature': 0.3,
-            'max_tokens': 2000
-        }
-        
-        response = requests.post(GROQ_API_URL, headers=headers, json=data)
-        response.raise_for_status()
-        result = response.json()
-        workflow_text = result['choices'][0]['message']['content']
-
-        # Extract JSON from possible code fences or extra text
-        # Find the first '{' and the last '}' to bound the JSON object
-        start = workflow_text.find('{')
-        end = workflow_text.rfind('}')
-        if start != -1 and end != -1 and end > start:
-            workflow_json = workflow_text[start:end+1]
-        else:
-            workflow_json = workflow_text
-
-        # Try to parse the JSON
-        workflow = json.loads(workflow_json)
-        return workflow, None
-
-    except Exception as e:
-        return None, str(e)
+# Removed Groq fallback; the app now uses only LOCAL_INFER_URL
 
 
 def ensure_required_defaults(workflow: dict) -> dict:
@@ -304,12 +262,8 @@ def generate_workflow():
                 'type': 'validation_error'
             }), 400
         
-        # Prefer local fine-tuned LLM first
+        # Use local fine-tuned LLM only
         workflow, error = generate_with_local_llm(prompt)
-        # Fall back to Groq if configured and local fails
-        if error or not workflow:
-            print(f"Local LLM failed: {error}. Trying Groq...")
-            workflow, error = generate_workflow_with_groq(prompt)
         if error or not workflow:
             return jsonify({"error": f"Generation failed: {error}"}), 500
         
@@ -323,7 +277,7 @@ def generate_workflow():
             'success': True,
             'workflow': workflow,
             'prompt': prompt,
-            'method': 'local' if error is None and workflow else 'groq'
+            'method': 'local'
         })
         
     except Exception as e:
@@ -342,6 +296,6 @@ if __name__ == '__main__':
     print("=" * 60)
     print(f"Server starting...")
     print(f"Open your browser to: http://localhost:5000")
-    print(f"Groq API configured: {'Yes' if GROQ_API_KEY else 'No (using fallback)'}")
+    print(f"Local LLM endpoint: {LOCAL_INFER_URL}")
     print("=" * 60)
     app.run(debug=True, host='0.0.0.0', port=5000)

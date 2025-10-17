@@ -39,33 +39,37 @@ class N8NWorkflowGenerator:
         self.tokenizer.pad_token = self.tokenizer.eos_token
         self.tokenizer.padding_side = 'right'
         
-        # Load base model with quantization if enabled
-        if self.use_quantization:
-            try:
-                bnb_config = BitsAndBytesConfig(
-                    load_in_4bit=True,
-                    bnb_4bit_quant_type='nf4',
-                    bnb_4bit_compute_dtype=torch.bfloat16,
-                    bnb_4bit_use_double_quant=True
-                )
-                self.model = AutoModelForCausalLM.from_pretrained(
-                    base_model,
-                    quantization_config=bnb_config,
-                    device_map="auto"
-                )
-            except Exception as e:
-                print(f"[WARNING] Quantization failed, falling back to fp16: {e}")
+        # Load base model with memory-efficient settings
+        try:
+            # Try GPU first with reduced memory usage
+            if torch.cuda.is_available():
+                print("[*] Attempting GPU loading with memory optimization...")
                 self.model = AutoModelForCausalLM.from_pretrained(
                     base_model,
                     torch_dtype=torch.float16,
-                    device_map="auto"
+                    device_map="auto",
+                    max_memory={0: "6GB", "cpu": "8GB"},  # Limit GPU memory
+                    offload_folder="./offload_tmp",
+                    low_cpu_mem_usage=True
                 )
-        else:
-            self.model = AutoModelForCausalLM.from_pretrained(
-                base_model,
-                torch_dtype=torch.float16,
-                device_map="auto"
-            )
+            else:
+                raise Exception("No CUDA available")
+        except Exception as e:
+            print(f"[WARNING] GPU loading failed ({e}), trying CPU...")
+            try:
+                # Fallback to CPU with disk offload
+                self.model = AutoModelForCausalLM.from_pretrained(
+                    base_model,
+                    torch_dtype=torch.float32,  # CPU needs float32
+                    device_map="cpu",
+                    low_cpu_mem_usage=True,
+                    offload_folder="./offload_tmp"
+                )
+                self.device = "cpu"
+                print("[*] Using CPU inference (slower but works)")
+            except Exception as e2:
+                print(f"[ERROR] Both GPU and CPU loading failed: {e2}")
+                raise
         
         # Load LoRA adapter
         self.model = PeftModel.from_pretrained(self.model, self.model_dir)

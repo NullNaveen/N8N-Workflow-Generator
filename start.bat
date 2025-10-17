@@ -21,12 +21,16 @@ pip install -r requirements.txt
 echo.
 echo [2/4] Checking configuration...
 if not exist .env (
-    echo No .env file found. You can optionally create one for Groq API.
-    echo The app will work with rule-based generation without it.
+    echo No .env file found. Creating a default one for LOCAL_INFER_URL.
+    echo LOCAL_INFER_URL=http://127.0.0.1:8000/generate> .env
 )
 
 echo.
-echo [3/4] Starting the server...
+echo [3/4] Ensure your local LLM server is running at %LOCAL_INFER_URL% (from .env)
+echo        Example server endpoint: http://127.0.0.1:8000/generate
+echo        If not running, start your local model server first.
+
+echo [4/4] Starting the API server...
 echo.
 echo ========================================
 echo Server will start at: http://localhost:5000

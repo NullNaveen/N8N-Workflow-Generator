@@ -12,7 +12,7 @@ This project uses AI to automatically generate n8n automation workflows from nat
 - **Output**: A complete n8n workflow JSON file ready to import into n8n
 
 ### Features
-✅ **Zero Cost** - Uses free Groq API or works without API  
+✅ **Zero Cost** - Uses your local LLM endpoint only  
 ✅ **Chat Interface** - Simple, user-friendly web UI  
 ✅ **AI-Powered** - Intelligent workflow generation using LLM  
 ✅ **Instant Download** - Get your workflow JSON immediately  
@@ -62,9 +62,9 @@ These folders represent all the available n8n integrations (Gmail, Slack, Google
 
 ---
 
-## 🔧 Advanced Setup (Local LLM + Groq optional)
+## 🔧 Advanced Setup (Local LLM only)
 
-The app now uses a Local LLM first (if available), and Groq second (optional). No rule-based mode.
+The app uses ONLY a Local LLM endpoint for generation. Set the endpoint in `.env` as `LOCAL_INFER_URL` (defaults to `http://127.0.0.1:8000/generate`).
 
 ### Option A: Local LLM (fine-tuned)
 1) Build dataset from your `workflows/`:
@@ -82,14 +82,7 @@ $env:BASE_MODEL="mistralai/Mistral-7B-Instruct-v0.3"
 $env:ADAPTER_PATH="models/n8n-lora"
 python .\scripts\serve\local_inference.py
 ```
-The app will call http://127.0.0.1:8000/generate first. Override with `LOCAL_INFER_URL` in `.env` if needed.
-
-### Option B: Groq (optional fallback)
-Set a free API key in `.env` to enable the Groq path:
-```
-GROQ_API_KEY=your_key_here
-```
-Restart the app after changes.
+The app will call http://127.0.0.1:8000/generate. Override with `LOCAL_INFER_URL` in `.env` if needed.
 
 ---
 
@@ -132,10 +125,10 @@ Restart the app after changes.
 ### Architecture
 ```
 User Input (Natural Language)
-    ↓
+   ↓
 Flask Backend (app.py)
-    ↓
-AI Processing (Groq API) OR Rule-Based Fallback
+   ↓
+Local LLM Inference (HTTP endpoint)
     ↓
 n8n JSON Generation
     ↓
@@ -147,8 +140,7 @@ Download Workflow JSON
 ### Tech Stack
 - **Backend**: Python + Flask
 - **Frontend**: HTML + JavaScript (Vanilla - no frameworks)
-- **AI**: Groq API (llama-3.1-70b-versatile model)
-- **Fallback**: Pattern matching for common scenarios
+- **AI**: Local LLM endpoint you run (can be your fine-tuned adapter)
 
 ### Project Structure
 ```
@@ -215,10 +207,10 @@ Define how data flows between nodes:
 - Each service (Gmail, Slack, etc.) needs authentication
 - Test each node individually in n8n
 
-### "AI mode not working"
-- Check your Groq API key in `.env`
-- Make sure there are no spaces or quotes around the key
-- The app will automatically fall back to rule-based mode
+### "LLM server not responding"
+- Ensure both servers are running: LLM (port 8000) and Frontend (port 5000)
+- Run `python run_full_test.py` to diagnose issues
+- If the real model (Mistral 7B) fails, use `python simple_test_server.py` instead
 
 ---
 
@@ -245,11 +237,11 @@ Edit `index.html` - all styling is in the `<style>` section.
 
 | Component | Cost | Notes |
 |-----------|------|-------|
-| Groq API | **FREE** | 14,400 requests/day on free tier |
+| Local LLM | **FREE** | Mistral-7B or Qwen on your hardware |
 | Python | **FREE** | Open source |
 | Flask | **FREE** | Open source |
 | Hosting (Local) | **FREE** | Runs on your computer |
-| **TOTAL** | **$0.00** | Completely free! |
+| **TOTAL** | **$0.00** | Completely free! No API costs |
 
 ---
 
