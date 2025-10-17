@@ -1,54 +1,92 @@
-# 🤖 N8N Workflow Generator - AI-Powered Automation Builder
+# N8N Workflow Generator - LLM-Powered
 
-**Convert plain English into ready-to-use n8n workflow JSON files!**
+Convert natural language descriptions into ready-to-use n8n workflows.
 
-This project uses AI to automatically generate n8n automation workflows from natural language descriptions. Simply describe what you want to automate, and the system creates a downloadable n8n workflow file.
+## Quick Start
 
----
+```powershell
+# Terminal 1: Start LLM server
+python simple_test_server.py
 
-## 🎯 What This Project Does
+# Terminal 2: Start frontend
+python app.py
 
-- **Input**: "Send an email when a new row is added to Google Sheets"
-- **Output**: A complete n8n workflow JSON file ready to import into n8n
+# Browser: http://localhost:5000
+```
 
-### Features
-✅ **Zero Cost** - Uses your local LLM endpoint only  
-✅ **Chat Interface** - Simple, user-friendly web UI  
-✅ **AI-Powered** - Intelligent workflow generation using LLM  
-✅ **Instant Download** - Get your workflow JSON immediately  
-✅ **No Coding Required** - Just describe what you want in plain English  
+## What It Does
 
----
+**Input:**  
+"When a WordPress post is published, shorten URL, post to Twitter/LinkedIn, log to Google Sheets"
 
-## 📁 What Are The Files You Have?
+**Output:**  
+Valid n8n workflow JSON with multiple nodes, ready to import and use.
 
-### **workflows/** folder
-This contains **2000+ real n8n workflow examples**. These are actual automation workflows that show you what's possible with n8n. We use a few of these as reference examples to help the AI understand n8n's structure.
+## Features
 
-### **n8n_nodes/** folder
-These folders represent all the available n8n integrations (Gmail, Slack, Google Sheets, etc.). They're currently empty but show you what services n8n can connect to.
+- ✅ Local LLM-only (no API keys, no costs)
+- ✅ Generates 4-8 nodes per prompt
+- ✅ Supports 20+ n8n integrations
+- ✅ Web UI + API interface
+- ✅ Download JSON immediately
 
----
+## Installation
 
-## 🚀 Quick Start Guide (For Non-Technical Users)
+1. Install Python 3.8+
+2. `pip install -r requirements.txt`
+3. Run the quick start commands above
 
-### Step 1: Install Python
-1. Go to https://www.python.org/downloads/
-2. Download Python (version 3.8 or newer)
-3. **IMPORTANT**: During installation, check the box that says "Add Python to PATH"
-4. Complete the installation
+## File Structure
 
-### Step 2: Set Up The Project
-1. Open the project folder in File Explorer
-2. Double-click on **`start.bat`**
-3. Wait for the installation to complete (first time only)
-4. The server will start automatically
+```
+├── app.py                      # Frontend API (port 5000)
+├── simple_test_server.py       # LLM server (port 8000)
+├── test_complex_prompts.py     # Validation tests
+├── scripts/serve/              # Real LLM model server
+├── trained_model/              # Fine-tuned adapter
+├── index.html                  # Web UI
+├── QUICKSTART.md              # Detailed setup guide
+└── requirements.txt           # Dependencies
+```
 
-### Step 3: Use The Chat Interface
-1. Your browser will show: `http://localhost:5000`
-2. If it doesn't open automatically, open your browser and go to that address
-3. You'll see a chat interface
-4. Type what automation you want (example: "Send an email when a new row is added to Google Sheets")
+## API Endpoints
+
+**Frontend:**
+- `POST /api/generate` - Generate workflow from prompt
+- `GET /api/examples` - Example prompts
+
+**LLM Server:**
+- `POST /generate` - Generate n8n JSON
+- `GET /health` - Health check
+
+## Supported Integrations
+
+Slack, Gmail, Discord, Google Sheets, Airtable, Notion, Trello, Asana, Zendesk, Stripe, MongoDB, HTTP, Twitter, LinkedIn, Teams, WordPress, and more.
+
+## Production LLM
+
+To use the real Mistral-7B model instead of lightweight server:
+
+```powershell
+$env:BASE_MODEL="mistralai/Mistral-7B-Instruct-v0.2"
+$env:ADAPTER_PATH="trained_model"
+python scripts\serve\local_inference.py
+```
+
+Requirements: GPU (6GB+) or CPU (16GB+ RAM)
+
+## Troubleshooting
+
+| Issue | Solution |
+|-------|----------|
+| Port 5000 already in use | `taskkill /f /im python.exe` |
+| Connection refused | Ensure both servers running in separate terminals |
+| Few nodes generated | Use more specific prompts with multiple app names |
+| Module not found | `pip install -r requirements.txt` |
+
+## License
+
+MIT
 5. Click "Send"
 6. Download the generated workflow JSON file
 

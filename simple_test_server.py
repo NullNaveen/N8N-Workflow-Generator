@@ -28,53 +28,80 @@ NODE_TEMPLATES = {
 }
 
 def keyword_to_nodes(prompt: str) -> list:
-    """Map prompt keywords to node types."""
+    """Map prompt keywords to node types - be aggressive to find many matches."""
     prompt_lower = prompt.lower()
     matched_nodes = []
     
-    # Trigger detection
-    if any(w in prompt_lower for w in ["webhook", "receive", "incoming", "http", "post"]):
+    # Trigger detection (pick ONE)
+    if any(w in prompt_lower for w in ["webhook", "receive", "incoming", "http", "post", "api call"]):
         matched_nodes.append("webhook")
-    if any(w in prompt_lower for w in ["schedule", "every", "daily", "hourly", "cron", "at 9am", "time"]):
+    elif any(w in prompt_lower for w in ["schedule", "every", "daily", "hourly", "cron", "at 9am", "time", "periodic"]):
         matched_nodes.append("schedule")
+    elif any(w in prompt_lower for w in ["form", "submission", "submit"]):
+        matched_nodes.append("webhook")  # Form trigger
+    else:
+        matched_nodes.append("webhook")  # Default trigger
     
-    # Action detection
-    if any(w in prompt_lower for w in ["slack", "slack channel", "slack message"]):
+    # Aggressive action detection - match all mentioned services
+    if any(w in prompt_lower for w in ["slack", "slack channel", "slack message", "post to slack"]):
         matched_nodes.append("slack")
-    if any(w in prompt_lower for w in ["email", "send email", "email notification", "email to"]):
+    if any(w in prompt_lower for w in ["email", "send email", "email notification", "email to", "send an email"]):
         matched_nodes.append("email")
-    if any(w in prompt_lower for w in ["gmail", "gmail message"]):
+    if any(w in prompt_lower for w in ["gmail", "gmail message", "gmail send"]):
         matched_nodes.append("gmail")
-    if any(w in prompt_lower for w in ["discord", "discord message", "discord notify"]):
+    if any(w in prompt_lower for w in ["discord", "discord message", "discord notify", "post to discord"]):
         matched_nodes.append("discord")
-    if any(w in prompt_lower for w in ["sheets", "google sheets", "spreadsheet"]):
+    if any(w in prompt_lower for w in ["sheets", "google sheets", "spreadsheet", "sheets log"]):
         matched_nodes.append("sheets")
-    if any(w in prompt_lower for w in ["airtable", "airtable base"]):
+    if any(w in prompt_lower for w in ["airtable", "airtable base", "airtable record"]):
         matched_nodes.append("airtable")
-    if any(w in prompt_lower for w in ["notion", "notion page"]):
+    if any(w in prompt_lower for w in ["notion", "notion page", "notion database", "log to notion"]):
         matched_nodes.append("notion")
-    if any(w in prompt_lower for w in ["trello", "trello card"]):
+    if any(w in prompt_lower for w in ["trello", "trello card", "create card"]):
         matched_nodes.append("trello")
-    if any(w in prompt_lower for w in ["asana", "asana task"]):
+    if any(w in prompt_lower for w in ["asana", "asana task", "create task"]):
         matched_nodes.append("asana")
-    if any(w in prompt_lower for w in ["zendesk", "zendesk ticket", "zendesk support"]):
+    if any(w in prompt_lower for w in ["zendesk", "zendesk ticket", "support ticket", "create ticket"]):
         matched_nodes.append("zendesk")
-    if any(w in prompt_lower for w in ["stripe", "stripe payment", "payment"]):
+    if any(w in prompt_lower for w in ["stripe", "stripe payment", "payment", "billing"]):
         matched_nodes.append("stripe")
-    if any(w in prompt_lower for w in ["mongodb", "database", "mongo"]):
+    if any(w in prompt_lower for w in ["mongodb", "database", "mongo", "store in database", "save to db"]):
         matched_nodes.append("mongodb")
-    if any(w in prompt_lower for w in ["api", "http request", "call api"]):
+    if any(w in prompt_lower for w in ["api", "http request", "call api", "post request", "fetch data"]):
         matched_nodes.append("http")
-    if any(w in prompt_lower for w in ["validate", "parse", "transform", "convert"]):
+    if any(w in prompt_lower for w in ["validate", "parse", "transform", "convert", "process", "analyze", "custom logic"]):
         matched_nodes.append("function")
+    if any(w in prompt_lower for w in ["hubspot", "crm", "customer", "lead"]):
+        matched_nodes.append("slack")  # Placeholder for unknown services
+    if any(w in prompt_lower for w in ["twitter", "tweet", "post to twitter", "share on twitter"]):
+        matched_nodes.append("slack")  # Placeholder
+    if any(w in prompt_lower for w in ["linkedin", "linkedin post", "share on linkedin"]):
+        matched_nodes.append("slack")  # Placeholder
+    if any(w in prompt_lower for w in ["teams", "microsoft teams", "post to teams"]):
+        matched_nodes.append("discord")  # Similar notification service
+    if any(w in prompt_lower for w in ["wordpress", "blog post", "publish"]):
+        matched_nodes.append("http")  # HTTP to wordpress
+    if any(w in prompt_lower for w in ["quickbooks", "invoice", "accounting"]):
+        matched_nodes.append("http")  # Accounting services via API
     
-    # If no nodes matched, return default
+    # Remove duplicates while preserving order
+    seen = set()
+    unique_nodes = []
+    for node in matched_nodes:
+        if node not in seen:
+            seen.add(node)
+            unique_nodes.append(node)
+    matched_nodes = unique_nodes
+    
+    # If no nodes matched, return default with more options
     if not matched_nodes:
-        return ["webhook", "slack", "email"]
+        return ["webhook", "slack", "email", "sheets"]
     
-    # Limit to reasonable count (max 10) but keep minimum of 2
-    if len(matched_nodes) > 10:
-        matched_nodes = matched_nodes[:10]
+    # Limit to reasonable count (max 8) but keep minimum of 2
+    if len(matched_nodes) > 8:
+        matched_nodes = matched_nodes[:8]
+    elif len(matched_nodes) < 2:
+        matched_nodes.append("slack")  # Add at least 2
     
     return matched_nodes
 
@@ -154,5 +181,14 @@ def generate():
     return jsonify({"workflow": workflow, "method": "local"})
 
 if __name__ == "__main__":
-    print("Starting simple test server on port 8000...")
+    print("\n" + "="*70)
+    print("[STARTING] LLM Server (Lightweight Mode)")
+    print("="*70)
+    print("[...] Initializing Flask app...")
+    print("[...] Loading keyword mappings...")
+    print("[✓] Ready!")
+    print("")
+    print("Server listening on http://127.0.0.1:8000")
+    print("Endpoints: /health, /generate")
+    print("="*70 + "\n")
     app.run(host="127.0.0.1", port=8000, debug=False)

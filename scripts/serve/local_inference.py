@@ -42,9 +42,19 @@ def load_model():
         tokenizer = AutoTokenizer.from_pretrained(source_for_tokenizer, use_fast=True, trust_remote_code=True)
         if tokenizer.pad_token is None:
             tokenizer.pad_token = tokenizer.eos_token
-        # Load base model; let transformers decide device map; default to float16 if possible
+        # Load base model with memory-aware strategy
         dtype = torch.float16 if torch.cuda.is_available() else torch.float32
-        base_model = AutoModelForCausalLM.from_pretrained(base, torch_dtype=dtype, device_map="auto", trust_remote_code=True)
+        
+        # For CPU: use simple device mapping without disk offload
+        if torch.cuda.is_available():
+            base_model = AutoModelForCausalLM.from_pretrained(
+                base, torch_dtype=dtype, device_map="auto", max_memory={0: "6GB"}, trust_remote_code=True
+            )
+        else:
+            # CPU mode: load directly without device_map to avoid disk offload issues
+            base_model = AutoModelForCausalLM.from_pretrained(
+                base, torch_dtype=dtype, trust_remote_code=True
+            ).to("cpu")
 
         # Attach LoRA adapter only if adapter path exists and looks valid
         if os.path.isdir(adapter) and any(os.path.exists(os.path.join(adapter, fname)) for fname in ("adapter_config.json", "adapter_model.bin", "adapter_model.safetensors")):
